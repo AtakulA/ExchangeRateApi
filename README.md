@@ -10,6 +10,7 @@ Web Api project for exchange rates
 (I have added auto migration settings in Program.cs but because of the logger it doesn't work)
 
 =============================================
+
 Missing Requirements
 1- Caching
 
