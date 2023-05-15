@@ -1,8 +1,12 @@
 ﻿using AutoMapper;
 using ExchangeService.Data;
 using ExchangeService.Domain;
+using ExchangeService.Domain.Models.Api;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
+using RestSharp;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
@@ -17,12 +21,18 @@ namespace ExchangeService.Services
         private readonly ExchangeRatesDbContext context;
         private readonly IMapper mapper;
         private readonly IDistributedCache cache;
+        private readonly IConfiguration config;
+        private readonly string apiUrl;
+        private readonly string apiKey;
 
-        public CurrencyExchangeService(ExchangeRatesDbContext _context, IMapper _mapper, IDistributedCache _cache)
+        public CurrencyExchangeService(ExchangeRatesDbContext _context, IMapper _mapper, IDistributedCache _cache, IConfiguration _config)
         {
             context = _context;
             mapper = _mapper;
             cache = _cache;
+            config = _config;
+            apiUrl = config.GetConnectionString("ExchangeRatesApiUrl");
+            apiKey = config.GetConnectionString("Api-Key");
         }
 
 
@@ -50,7 +60,7 @@ namespace ExchangeService.Services
 
                 if (rate != null)
                 {
-                    if (CheckRate(rate))
+                    if (!CanRateBeUsed(rate))
                     {
                         rate.IsExpired = true;
                         context.Update(rate);
@@ -88,18 +98,72 @@ namespace ExchangeService.Services
             }
         }
 
-        private bool CheckRate(ExchangeRate rate)
+        private bool CanRateBeUsed(ExchangeRate rate)
         {
-            return rate.ExpiresAt < DateTime.Now;
+            return rate.ExpiresAt > DateTime.Now;
 
         }
 
 
         // API CALL
-        private ExchangeRate GetNewRate(GetExchangeRateModel request)
+        private  ExchangeRate GetNewRate(GetExchangeRateModel request)
         {
-            throw new NotImplementedException();    // WRITE API CALL HERE TO GET CURRENT RATE
+            try
+            {
+                CheckGivenCurrencies(request);
+
+                HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("apikey", apiKey);
+
+                HttpResponseMessage response =  client.GetAsync(apiUrl + "latest?symbols=" + request.To + "&base=" + request.From).Result;
+                var strResponse =  response.Content.ReadAsStringAsync().Result;
+                ApiRateResponse apiResponse = JsonConvert.DeserializeObject<ApiRateResponse>(strResponse);
+
+                if (!apiResponse.Success)
+                    throw new Exception("Couldn't connect ExchangeRateApi!");
+
+                ExchangeRate newRate = new ExchangeRate
+                {
+                    From = request.From,
+                    To = request.To,
+                    AcquiredAt = DateTime.Now,
+                    ExpiresAt = DateTime.Now.AddMinutes(30),
+                    IsExpired = false,
+                    Rate = apiResponse.Rates.Values.FirstOrDefault(),
+                };
+
+                return newRate;
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
         }
+
+        private void CheckGivenCurrencies(GetExchangeRateModel request)
+        {
+            try
+            {
+
+
+                HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Add("apikey", apiKey);
+
+                HttpResponseMessage response =  client.GetAsync(apiUrl + "symbols").Result;
+                var strResponse =  response.Content.ReadAsStringAsync().Result;
+                ApiCurrenciesResponse apiResponse = JsonConvert.DeserializeObject<ApiCurrenciesResponse>(strResponse);
+
+                if (!apiResponse.Symbols.ToList().Any(x => x.Key == request.From) || !apiResponse.Symbols.ToList().Any(x => x.Key == request.To))
+                    throw new Exception("One or both of the given currencies are not exist!");
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
 
 
         #endregion
@@ -205,7 +269,7 @@ namespace ExchangeService.Services
         {
             try
             {
-                ExchangeTrade trade = context.ExchangeTrades.FirstOrDefault(x => x.Id == tradeId);
+                ExchangeTrade trade = context.ExchangeTrades.Include(x=>x.ExchangeRate).FirstOrDefault(x => x.Id == tradeId);
 
                 return MapModel(trade);
             }

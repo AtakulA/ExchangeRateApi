@@ -18,12 +18,12 @@ namespace ExchangeService.WebApi.Controllers
         }
 
 
-        [HttpPost("GetExchageRate")]
-        public IActionResult GetExchangeRate([FromBody]GetExchangeRateModel request)
+        [HttpGet("GetExchageRate/from={from}&to={to}")]
+        public IActionResult GetExchangeRate(string from, string to)
         {
             try
             {
-                return Ok(service.GetExchangeRate(request));
+                return Ok(service.GetExchangeRate(new GetExchangeRateModel { From = from,To = to}));
             }
             catch (Exception e)
             {
