@@ -16,6 +16,24 @@ namespace ExchangeService.Controller.Test
         private readonly ILogger<CurrencyExchangeController> logger = Substitute.For<ILogger<CurrencyExchangeController>>();
         public CurrencyExchangeServiceTest() { controller = new CurrencyExchangeController(service, logger); }
 
+        #region GetExchangeRate
+        [Fact]
+        public void Get_ExchangeRate_Success()
+        {
+            GetExchangeRateModel request = new GetExchangeRateModel { From = "USD", To = "EUR" };
+            ExchangeRateModel model = new ExchangeRateModel { From = "USD", To = "EUR", Rate = 0.91M,AcquiredAt = DateTime.Now, ExpiresAt = DateTime.Now.AddHours(1), IsExpired = false  };
+
+
+            service.GetExchangeRate(request).Returns(model);
+
+            var result = controller.GetExchangeRate(request);
+            var okObject = (OkObjectResult)result;
+
+            okObject.Value.Equals(model);
+        }
+        #endregion
+
+        #region Trade
         [Fact]
         public void Create_Trade_Success()
         {
@@ -31,6 +49,23 @@ namespace ExchangeService.Controller.Test
         }
 
         [Fact]
+        public void Create_Trade_Failed()
+        {
+            ExchangeTradeRequest req = new ExchangeTradeRequest { UserId = 2, From = "ABC", To = "EUR", UserAmount = 1500 };
+
+
+            service.Trade(req).Returns(1);
+
+            var result = controller.Trade(req);
+            var okObject = (OkObjectResult)result;
+
+            Assert.False((int)okObject.Value == 2);
+        }
+
+        #endregion
+
+        #region GetUserTrade
+        [Fact]
         public void Get_UserTrade_Success()
         {
             int req = 1;
@@ -45,20 +80,69 @@ namespace ExchangeService.Controller.Test
             okObject.Value.Equals(model);
         }
 
+        #endregion
+
+        #region GetUserTrades
         [Fact]
-        public void Get_UserTrades_Failed()
+        public void Get_UserTrades_Success()
         {
-            int req = 1;
+            int userId = 1;
             List<ExchangeTradeModel> list = new List<ExchangeTradeModel>();
 
-            var res = new NotFoundResult();
+            var res = service.GetUserTrades(userId);
 
-            service.GetUserTrades(req).Returns(list);
+            if(res != null && res.Count > 0)
+            {
 
-            var result = controller.GetTrade(req);
-            var notFoundObject = (OkObjectResult)result;
+                var result = controller.GetTrades(userId);
+                var okObject = (OkObjectResult)result;
 
-            Assert.False(notFoundObject.Value == list);
+                Assert.Equal(okObject.Value, list);
+            }
+            else
+            {
+                var result = controller.GetTrades(userId);
+                var notFoundObject = (NotFoundResult)result;
+
+                var requiredResponse = new NotFoundResult();
+
+                Assert.Equal(notFoundObject.StatusCode ,requiredResponse.StatusCode);
+            }
         }
+        #endregion
+
+        #region GetTrades
+        [Fact]
+        public void Get_Trades_Success()
+        {
+            List<ExchangeTradeModel> list = new List<ExchangeTradeModel>();
+
+            service.GetAllUsersTrades().Returns(list);
+
+            var result = controller.GetTrades();
+            var okObject = (OkObjectResult)result;
+
+            Assert.Equal(okObject.Value, list);
+        }
+        #endregion
+
+        #region WhenCanUserTrade
+        [Fact]
+        public void Get_WhenCanUserTrade_Success()
+        {
+            int userId = 1;
+            int response = 0;
+            service.WhenCanUserTrade(userId).Returns(response);
+
+            var result = controller.WhenCanUserTrade(userId);
+            var okObject = (OkObjectResult)result;
+
+            okObject.Value.Equals(response);
+        }
+
+
+        
+        #endregion
+
     }
 }
