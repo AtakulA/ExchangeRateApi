@@ -4,14 +4,37 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>a1cad861-eb9c-4493-9478-f1851cfd91ec</UserSecretsId>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+    <DockerComposeProjectPath>..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
-
+	
+	
+<ItemGroup>
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="7.0.5" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.8" />
+		<PackageReference Include="NLog.Appsettings.Standard" Version="2.1.0" />
+		<PackageReference Include="NLog.Database" Version="5.1.4" />
+		<PackageReference Include="NLog.Extensions.Logging" Version="5.2.3" />
+		<PackageReference Include="NLog.Web.AspNetCore" Version="5.2.3" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
+	</ItemGroup>	
+	
+	
   <ItemGroup>
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\ExchangeService.Data\ExchangeService.Data.csproj" />
+    <ProjectReference Include="..\ExchangeService.Domain\ExchangeService.Domain.csproj" />
+    <ProjectReference Include="..\ExchangeService.Services\ExchangeService.Services.csproj" />
   </ItemGroup>
 
 </Project>
