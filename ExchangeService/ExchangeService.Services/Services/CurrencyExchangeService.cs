@@ -119,8 +119,8 @@ namespace ExchangeService.Services
                 var strResponse =  response.Content.ReadAsStringAsync().Result;
                 ApiRateResponse apiResponse = JsonConvert.DeserializeObject<ApiRateResponse>(strResponse);
 
-                if (!apiResponse.Success)
-                    throw new Exception("Couldn't connect ExchangeRateApi!");
+                if (!apiResponse.Success || (apiResponse.Rates == null || apiResponse.Rates.Count == 0))
+                    throw new Exception("ExchangeRateApi was not a success!");
 
                 ExchangeRate newRate = new ExchangeRate
                 {
