@@ -1,5 +1,5 @@
-# MeDirectProject
-Web Api project for exchange rates
+# ExchangeRateApi
+Web Api project for exchange rates / Simple trades
 
 =============================================
 
