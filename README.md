@@ -17,6 +17,14 @@ Web Api project for exchange rates
 
 =============================================
 
-Missing Requirements
-1- Caching
+Features
+
+1- Gets exchange rate for 2 given currencies, also checks if given rate whether older than 30 mins or not. 
+If it is older, then project gets the current rate from an api. (From-To currencies. Example: From=USD To=EUR)
+
+2- With sending userId you can trade from one currency to another. Every user have 10 trade chance per hour.
+
+3- You can list all trades or user specific trades or get a specific trade detail.
+
+4- You can check when a user can trade.(In minutes)
 
